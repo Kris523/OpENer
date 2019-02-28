@@ -1,2 +1,0 @@
-cmake -DOpENer_PLATFORM:STRING="POSIX" -DCMAKE_BUILD_TYPE:STRING="" ../../source
-
