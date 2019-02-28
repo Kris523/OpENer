@@ -143,3 +143,21 @@ git config filter.uncrustify.smudge "cat"
 ```
 
 
+
+Kris Build information:
+
+
+rm bin/
+#that is just crap.
+
+
+cd ../
+mkdir build-opener
+cd build-opener
+cmake -DOpENer_PLATFORM:STRING="POSIX" -DCMAKE_BUILD_TYPE:STRING="" ../OpENer/source
+make
+
+cd ~/git/build-opener/src/ports/POSIX
+sudo ./OpENer eth0
+
+
