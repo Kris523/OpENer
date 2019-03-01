@@ -29,6 +29,8 @@ EipUint8 g_assembly_data096[32]; /* Output */
 EipUint8 g_assembly_data097[10]; /* Config */
 EipUint8 g_assembly_data09A[32]; /* Explicit */
 
+//PLC needs same type and size for explicit length
+
 EipStatus ApplicationInitialization(void) {
   /* create 3 assembly object instances*/
   /*INPUT*/
@@ -94,6 +96,7 @@ EipStatus AfterAssemblyDataReceived(CipInstance *instance) {
               sizeof(g_assembly_data064) );
       break;
     case DEMO_APP_EXPLICT_ASSEMBLY_NUM:
+        printf("EXPLICET SOMETHING!!\n");
       /* do something interesting with the new data from
        * the explicit set-data-attribute message */
       break;
@@ -110,6 +113,30 @@ EipStatus AfterAssemblyDataReceived(CipInstance *instance) {
         "Unknown assembly instance ind AfterAssemblyDataReceived");
       break;
   }
+
+    printf("Current Assembly Data: INPUT \n");
+    int i = 0;
+    for(i=0;i<sizeof(g_assembly_data064);i++) {
+        printf("\\%02hhx", (unsigned char) g_assembly_data096[i]);
+    }
+    printf("\n");
+    printf("Current Assembly Data: Output \n");
+    for(i=0;i<sizeof(g_assembly_data096);i++) {
+        printf("\\%02hhx", (unsigned char) g_assembly_data096[i]);
+    }
+    printf("\n");
+    printf("Current Assembly Data: Config \n");
+    for(i=0;i<sizeof(g_assembly_data097);i++) {
+        printf("\\%02hhx", (unsigned char) g_assembly_data097[i]);
+    }
+    printf("\n");
+    printf("Current Assembly Data: Explicit \n");
+    for(i=0;i<sizeof(g_assembly_data09A);i++) {
+        printf("\\%02hhx", (unsigned char) g_assembly_data09A[i]);
+    }
+    printf("\n");
+   // g_assembly_data09A[0] = 3;
+
   return status;
 }
 
