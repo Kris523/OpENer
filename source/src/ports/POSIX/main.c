@@ -195,7 +195,11 @@ void LeaveStack(int signal) {
 void *executeEventLoop() {
   /* The event loop. Put other processing you need done continually in here */
   while (1 != g_end_stack) {
-      PrintCurrentStates();
+      struct ioAssembly input = getOutputAssembly();
+//      setInputAssembly(input);
+      PrintAssembly(input);
+
+      setInputAssembly(input);
 
     if (kEipStatusOk != NetworkHandlerProcessOnce() ) {
       OPENER_TRACE_ERR("Error in NetworkHandler loop! Exiting OpENer!\n");
