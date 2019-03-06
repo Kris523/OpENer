@@ -115,6 +115,46 @@ CipInstance *CreateAssemblyObject(const EipUint32 instance_id,
   return instance;
 }
 
+CipInstance *CreateCustomAssemblyObject(const EipUint32 instance_id,
+                                  EipByte *const data,
+                                  const EipUint16 data_length, const EipUint32 CipAssemblyClassCode) {
+    CipClass *assembly_class = GetCipClass(CipAssemblyClassCode);
+    if(NULL == assembly_class) {
+        assembly_class = CreateAssemblyClass();
+    }
+
+    if(NULL == assembly_class) {
+        return NULL;
+    }
+
+    CipInstance *const instance = AddCIPInstance(assembly_class, instance_id);  /* add instances (always succeeds (or asserts))*/
+
+    CipByteArray *const assembly_byte_array = (CipByteArray *) CipCalloc(1,
+                                                                         sizeof(
+                                                                                 CipByteArray) );
+    if(assembly_byte_array == NULL) {
+        return NULL; /*TODO remove assembly instance in case of error*/
+    }
+
+    assembly_byte_array->length = data_length;
+    assembly_byte_array->data = data;
+    InsertAttribute(instance,
+                    3,
+                    kCipByteArray,
+                    assembly_byte_array,
+                    kSetAndGetAble);
+    /* Attribute 4 Number of bytes in Attribute 3 */
+    InsertAttribute(instance,
+                    4,
+                    kCipUint,
+                    &(assembly_byte_array->length),
+                    kGetableSingle);
+
+    return instance;
+}
+
+
+
 EipStatus NotifyAssemblyConnectedDataReceived(CipInstance *const instance,
                                               const EipUint8 *const data,
                                               const EipUint16 data_length) {

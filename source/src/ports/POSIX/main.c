@@ -23,6 +23,8 @@
 #include "doublylinkedlist.h"
 #include "cipconnectionobject.h"
 
+#include "sample_application/sampleapplication.c"
+
 /******************************************************************************/
 /** @brief Signal handler function for ending stack execution
  *
@@ -193,7 +195,7 @@ void LeaveStack(int signal) {
 void *executeEventLoop() {
   /* The event loop. Put other processing you need done continually in here */
   while (1 != g_end_stack) {
-
+      PrintCurrentStates();
 
     if (kEipStatusOk != NetworkHandlerProcessOnce() ) {
       OPENER_TRACE_ERR("Error in NetworkHandler loop! Exiting OpENer!\n");
