@@ -55,6 +55,32 @@ CipClass *CreateAssemblyClass(void) {
   return assembly_class;
 }
 
+CipClass *CreateCustomAssemblyClass(EipUint32 CipAssemblyClassCode) {
+    /* create the CIP Assembly object with zero instances */
+    CipClass *assembly_class = CreateCipClass(CipAssemblyClassCode, 0, /* # class attributes*/
+                                              7, /* # highest class attribute number*/
+                                              1, /* # class services*/
+                                              2, /* # instance attributes*/
+                                              4, /* # highest instance attribute number*/
+                                              2, /* # instance services*/
+                                              0, /* # instances*/
+                                              "assembly", /* name */
+                                              2, /* Revision, according to the CIP spec currently this has to be 2 */
+                                              NULL); /* # function pointer for initialization*/
+    if(NULL != assembly_class) {
+        InsertService(assembly_class,
+                      kGetAttributeSingle,
+                      &GetAttributeSingle,
+                      "GetAttributeSingle");
+        InsertService(assembly_class,
+                      kSetAttributeSingle,
+                      &SetAssemblyAttributeSingle,
+                      "SetAssemblyAttributeSingle");
+    }
+
+    return assembly_class;
+}
+
 /** @brief create the CIP Assembly object with zero instances
  *
  */
@@ -120,7 +146,7 @@ CipInstance *CreateCustomAssemblyObject(const EipUint32 instance_id,
                                   const EipUint16 data_length, const EipUint32 CipAssemblyClassCode) {
     CipClass *assembly_class = GetCipClass(CipAssemblyClassCode);
     if(NULL == assembly_class) {
-        assembly_class = CreateAssemblyClass();
+        assembly_class = CreateCustomAssemblyClass(CipAssemblyClassCode);
     }
 
     if(NULL == assembly_class) {

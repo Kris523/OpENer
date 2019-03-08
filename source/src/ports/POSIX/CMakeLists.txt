@@ -2,6 +2,9 @@ add_subdirectory(sample_application)
 
 set( PLATFORM_SPEC_SRC networkhandler.c opener_error.c networkconfig.c)
 
+
+set( CMAKE_CXX_FLAGS "-O0 -g --coverage " )
+
 #######################################
 # OpENer RT patch	              #
 #######################################

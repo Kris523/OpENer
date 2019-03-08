@@ -296,6 +296,12 @@ CipInstance *CreateAssemblyObject(const EipUint32 instance_number,
                                   EipByte *const data,
                                   const EipUint16 data_length);
 
+
+/*Eigen Special*/
+CipInstance *CreateCustomAssemblyObject(const EipUint32 instance_id,
+                                        EipByte *const data,
+                                        const EipUint16 data_length, const EipUint32 CipAssemblyClassCode);
+
 typedef struct cip_connection_object CipConnectionObject;
 
 /** @ingroup CIP_API
