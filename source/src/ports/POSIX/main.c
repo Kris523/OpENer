@@ -23,8 +23,6 @@
 #include "doublylinkedlist.h"
 #include "cipconnectionobject.h"
 
-#include "sample_application/sampleapplication.c"
-#include "time.h"
 /******************************************************************************/
 /** @brief Signal handler function for ending stack execution
  *
@@ -194,68 +192,7 @@ void LeaveStack(int signal) {
 
 void *executeEventLoop() {
   /* The event loop. Put other processing you need done continually in here */
-    time_t begin;
-    begin = time(NULL);
-    while (1 != g_end_stack) {
-
-      if(difftime(time(NULL), begin) > 1.0) {
-          begin=time(NULL);
-
-          printf("\n");
-          struct ioAssembly input = getOutputImplicitAssembly();
-          PrintImplicitAssembly(input);
-          setInputImplicitAssembly(input);
-
-          EipFloat floats[1000];
-          int size = getReadOnlyRealAssembly(floats);
-          printf("Reals:");
-          for(unsigned int i = 0; i<size; i++){
-            printf("%f ", floats[i]);
-          }
-          printf("\n");
-
-          EipInt32 dints[1000];
-          int dsize = getReadOnlyDintAssembly(dints);
-          printf("Dints:");
-          for(unsigned int i = 0; i<dsize; i++){
-              printf("%d ", dints[i]);
-          }
-          printf("\n");
-
-
-          char* strings[30];
-          int ssize = getReadOnlyStringAssembly(strings);
-          printf("Strings: " );
-          for(unsigned int i = 0; i<ssize; i++){
-              if(strings[i])
-                printf("%s ", strings[i]);
-              else
-                  printf("NULL ");
-          }
-          printf("\n");
-
-          EipFloat ofloats[1000] = {0};
-          ofloats[0] = 1.012;
-          ofloats[1] = 2.012;
-          ofloats[2] = 3.032;
-          setWriteOnlyRealAssembly(ofloats);
-
-          EipInt32 odints[1000] = {0};
-          odints[0]=1;
-          odints[1]=2;
-          odints[2]=3;
-          odints[3]=4;
-          setWriteOnlyDintAssembly(odints);
-
-          char* ostrings[30] = {0};
-          ostrings[0] = "jakes";
-          ostrings[1] = "a";
-          ostrings[2] = "banana";
-          setWriteOnlyStringAssembly(ostrings);
-
-
-      }
-
+  while (1 != g_end_stack) {
     if (kEipStatusOk != NetworkHandlerProcessOnce() ) {
       OPENER_TRACE_ERR("Error in NetworkHandler loop! Exiting OpENer!\n");
       break;

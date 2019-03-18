@@ -7,77 +7,36 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <stdio.h>
+
 #include "opener_api.h"
 #include "appcontype.h"
 #include "trace.h"
 #include "cipidentity.h"
 
-/* outputs are my reads */
-/*inputs are my writes */
-
-
-#define EIGEN_ADAPTER_WRITE_ONLY                100 //0x064
-#define EIGEN_ADAPTER_READ_ONLY               150 //0x096
-
-//Not used yet
+#define DEMO_APP_INPUT_ASSEMBLY_NUM                100 //0x064
+#define DEMO_APP_OUTPUT_ASSEMBLY_NUM               150 //0x096
 #define DEMO_APP_CONFIG_ASSEMBLY_NUM               151 //0x097
 #define DEMO_APP_HEARTBEAT_INPUT_ONLY_ASSEMBLY_NUM  152 //0x098
 #define DEMO_APP_HEARTBEAT_LISTEN_ONLY_ASSEMBLY_NUM 153 //0x099
-
-
 #define DEMO_APP_EXPLICT_ASSEMBLY_NUM              154 //0x09A
 
-
-
-#define EIGEN_ADAPTER_READ_ONLY_REAL       1
-#define EIGEN_ADAPTER_READ_ONLY_DINT       1
-#define EIGEN_ADAPTER_READ_ONLY_STRING     1
-
-
-#define EIGEN_ADAPTER_WRITE_ONLY_REAL       1
-#define EIGEN_ADAPTER_WRITE_ONLY_DINT       1
-#define EIGEN_ADAPTER_WRITE_ONLY_STRING     1
 /* global variables for demo application (4 assembly data fields)  ************/
 
 extern CipUint g_encapsulation_inactivity_timeout;
 
-
-struct ioAssembly {
-    EipInt32 Trigger;
-    EipInt32 s_Trigger;
-    EipInt32 partLength;
-    char partString[32];
-    EipInt32 partNumber;
-    EipFloat pollingReal[12];
-};
-
-EipUint8 g_assembly_data064[96]; /* Input */
-EipUint8 g_assembly_data096[96]; /* Output */
-
+EipUint8 g_assembly_data064[32]; /* Input */
+EipUint8 g_assembly_data096[32]; /* Output */
 EipUint8 g_assembly_data097[10]; /* Config */
 EipUint8 g_assembly_data09A[32]; /* Explicit */
-
-#define STRING_SIZE 88
-#define STRINGLENGTH 30
-
-EipUint8 g_assembly_data_read_real[1000*4];
-EipUint8 g_assembly_data_read_dint[1000*4];
-EipUint8 g_assembly_data_read_string[STRINGLENGTH*STRING_SIZE];
-
-EipUint8 g_assembly_data_write_real[1000*4];
-EipUint8 g_assembly_data_write_dint[1000*4];
-EipUint8 g_assembly_data_write_string[STRINGLENGTH*STRING_SIZE];
-
 
 EipStatus ApplicationInitialization(void) {
   /* create 3 assembly object instances*/
   /*INPUT*/
-  CreateAssemblyObject( EIGEN_ADAPTER_WRITE_ONLY, g_assembly_data064,
+  CreateAssemblyObject( DEMO_APP_INPUT_ASSEMBLY_NUM, g_assembly_data064,
                         sizeof(g_assembly_data064) );
 
   /*OUTPUT*/
-  CreateAssemblyObject( EIGEN_ADAPTER_READ_ONLY, g_assembly_data096,
+  CreateAssemblyObject( DEMO_APP_OUTPUT_ASSEMBLY_NUM, g_assembly_data096,
                         sizeof(g_assembly_data096) );
 
   /*CONFIG*/
@@ -94,45 +53,16 @@ EipStatus ApplicationInitialization(void) {
   CreateAssemblyObject( DEMO_APP_EXPLICT_ASSEMBLY_NUM, g_assembly_data09A,
                         sizeof(g_assembly_data09A) );
 
-
-    for(unsigned int i=0; i<sizeof(g_assembly_data_write_real); i=i+400){
-        CreateCustomAssemblyObject( EIGEN_ADAPTER_WRITE_ONLY_REAL + i/400, &g_assembly_data_write_real[i],
-                                    400, 0x6B );
-    }
-
-    for(unsigned int i=0; i<sizeof(g_assembly_data_write_dint); i=i+400){
-        CreateCustomAssemblyObject( EIGEN_ADAPTER_WRITE_ONLY_DINT + i/400, &g_assembly_data_write_dint[i],
-                                    400, 0x6C );//write
-    }
-    for(unsigned int i=0; i<sizeof(g_assembly_data_write_string); i=i+440){
-        CreateCustomAssemblyObject( EIGEN_ADAPTER_WRITE_ONLY_STRING + i/440, &g_assembly_data_write_string[i],
-                                    440, 0x6D );//write
-    }
-
-    for(unsigned int i=0; i<sizeof(g_assembly_data_read_real); i=i+400) {
-        CreateCustomAssemblyObject(EIGEN_ADAPTER_READ_ONLY_REAL + i/400, &g_assembly_data_read_real[i],
-                                   400, 0x7B);//write
-    }
-    for(unsigned int i=0; i<sizeof(g_assembly_data_read_dint); i=i+400) {
-        CreateCustomAssemblyObject(EIGEN_ADAPTER_READ_ONLY_DINT + i/400, &g_assembly_data_read_dint[i],
-                                   400, 0x7C);
-    }
-    for(unsigned int i=0; i<sizeof(g_assembly_data_read_string); i=i+440) {
-        CreateCustomAssemblyObject(EIGEN_ADAPTER_READ_ONLY_STRING + i/440, &g_assembly_data_read_string[i],
-                                   440, 0x7D);
-    }
-
-
-  ConfigureExclusiveOwnerConnectionPoint(0, EIGEN_ADAPTER_READ_ONLY,
-                                         EIGEN_ADAPTER_WRITE_ONLY,
+  ConfigureExclusiveOwnerConnectionPoint(0, DEMO_APP_OUTPUT_ASSEMBLY_NUM,
+                                         DEMO_APP_INPUT_ASSEMBLY_NUM,
                                          DEMO_APP_CONFIG_ASSEMBLY_NUM);
   ConfigureInputOnlyConnectionPoint(0,
                                     DEMO_APP_HEARTBEAT_INPUT_ONLY_ASSEMBLY_NUM,
-                                    EIGEN_ADAPTER_WRITE_ONLY,
+                                    DEMO_APP_INPUT_ASSEMBLY_NUM,
                                     DEMO_APP_CONFIG_ASSEMBLY_NUM);
   ConfigureListenOnlyConnectionPoint(0,
                                      DEMO_APP_HEARTBEAT_LISTEN_ONLY_ASSEMBLY_NUM,
-                                     EIGEN_ADAPTER_WRITE_ONLY,
+                                     DEMO_APP_INPUT_ASSEMBLY_NUM,
                                      DEMO_APP_CONFIG_ASSEMBLY_NUM);
 
   return kEipStatusOk;
@@ -157,12 +87,13 @@ EipStatus AfterAssemblyDataReceived(CipInstance *instance) {
 
   /*handle the data received e.g., update outputs of the device */
   switch (instance->instance_number) {
-    case EIGEN_ADAPTER_READ_ONLY:
-        //Handle read message of the data.
-
+    case DEMO_APP_OUTPUT_ASSEMBLY_NUM:
+      /* Data for the output assembly has been received.
+       * Mirror it to the inputs */
+      memcpy( &g_assembly_data064[0], &g_assembly_data096[0],
+              sizeof(g_assembly_data064) );
       break;
     case DEMO_APP_EXPLICT_ASSEMBLY_NUM:
-        printf("EXPLICET SOMETHING!!\n");
       /* do something interesting with the new data from
        * the explicit set-data-attribute message */
       break;
@@ -182,105 +113,8 @@ EipStatus AfterAssemblyDataReceived(CipInstance *instance) {
   return status;
 }
 
-
-int getReadOnlyRealAssembly(EipFloat* floats )
-{
-    memcpy(floats, &g_assembly_data_read_real, sizeof(g_assembly_data_read_real));
-    return sizeof(g_assembly_data_read_real) / sizeof(EipFloat);
-}
-int getReadOnlyDintAssembly(EipInt32 * dints)
-{
-    memcpy(dints, &g_assembly_data_read_dint, sizeof(g_assembly_data_read_dint));
-    return sizeof(g_assembly_data_read_dint) / sizeof(EipInt32);
-}
-
-int getReadOnlyStringAssembly(char ** strings)
-{
-    unsigned int index=0;
-    for(unsigned int bytei=0; bytei<sizeof(g_assembly_data_read_string); bytei=bytei+STRING_SIZE, index++){
-        EipInt32 size = *(EipInt32 * )&g_assembly_data_read_string[bytei];
-        if(size > 0){
-            strings[index] = (char* )&g_assembly_data_read_string[bytei+4];
-        }else{
-            strings[index] = NULL;
-        }
-    }
-    return STRINGLENGTH;
-}
-
-void setWriteOnlyRealAssembly(EipFloat* floats){
-    memcpy(&g_assembly_data_write_real, floats, sizeof(g_assembly_data_write_real));
-}
-void setWriteOnlyDintAssembly(EipInt32 * dints){
-    memcpy(&g_assembly_data_write_dint, dints, sizeof(g_assembly_data_write_dint));
-}
-void setWriteOnlyStringAssembly(char ** strings){
-
-    unsigned int index=0;
-
-    for(unsigned int bytei=0; bytei<sizeof(g_assembly_data_write_string); bytei=bytei+STRING_SIZE, index++){
-
-        if(strings[index]) {
-            EipInt32 size = strlen(strings[index]);
-            g_assembly_data_write_string[bytei] = *(EipUint8 *) &size;
-            strcpy((char *) &g_assembly_data_write_string[bytei + 4], strings[index]);
-        }
-    }
-}
-
-
-void setInputImplicitAssembly(struct ioAssembly input){
-
-    memcpy(&g_assembly_data064[0], &input.Trigger, sizeof(input.Trigger));
-    memcpy(&g_assembly_data064[4], &input.s_Trigger, sizeof(input.s_Trigger));
-    memcpy(&g_assembly_data064[8], &input.partLength, sizeof(input.partLength));
-    memcpy(&g_assembly_data064[12], &input.partString, input.partLength*sizeof(EipInt8));
-    memcpy(&g_assembly_data064[44], &input.partNumber, sizeof(input.partNumber));
-    memcpy(&g_assembly_data064[48], &input.pollingReal, 48);
-
-}
-struct ioAssembly getOutputImplicitAssembly(){
-    struct ioAssembly output;
-
-    output.Trigger = *(EipInt32 *)&g_assembly_data096[0];
-    output.s_Trigger = *(EipInt32 *)&g_assembly_data096[4];
-    output.partLength = *(EipInt32 *)&g_assembly_data096[8];
-    memcpy(output.partString, &g_assembly_data096[12], output.partLength*sizeof(EipInt8));
-    output.partNumber = *(EipInt32 *)&g_assembly_data096[44];
-    memcpy(output.pollingReal, &g_assembly_data096[48], 48);
-
-    return output;
-}
-
-
-void PrintImplicitAssembly(struct ioAssembly assembly){
-    printf("Triggers: %d\t"
-           "Spare: %d\t"
-           "PartNumber Length %d\t"
-           "PartNumber String %s\t"
-           "PartNumber %d\t"
-           "Polling %f %f %f %f %f %f %f %f %f %f %f %f\n",
-           assembly.Trigger,
-           assembly.s_Trigger,
-           assembly.partLength,
-           assembly.partString,
-           assembly.partNumber,
-           assembly.pollingReal[0],
-           assembly.pollingReal[1],
-           assembly.pollingReal[2],
-           assembly.pollingReal[3],
-           assembly.pollingReal[4],
-           assembly.pollingReal[5],
-           assembly.pollingReal[6],
-           assembly.pollingReal[7],
-           assembly.pollingReal[8],
-           assembly.pollingReal[9],
-           assembly.pollingReal[10],
-           assembly.pollingReal[11]);
-}
-
 EipBool8 BeforeAssemblyDataSend(CipInstance *pa_pstInstance) {
-  /*update data to be sent e.g., read outputs of the device */
+  /*update data to be sent e.g., read inputs of the device */
   /*In this sample app we mirror the data from out to inputs on data receive
    * therefore we need nothing to do here. Just return true to inform that
    * the data is new.
